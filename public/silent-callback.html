@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>VIDIS Silent Callback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <script>
+        // Silent callback for OIDC token renewal
+        // This page is loaded in a hidden iframe to renew tokens automatically
+        
+        // Import the OIDC client library
+        const script = document.createElement('script');
+        script.src = '/node_modules/oidc-client-ts/dist/browser/oidc-client-ts.min.js';
+        script.onload = function() {
+            // Handle the silent callback
+            new oidc.UserManager({}).signinSilentCallback()
+                .then(() => {
+                    console.log('VIDIS Silent callback successful');
+                })
+                .catch((error) => {
+                    console.error('VIDIS Silent callback error:', error);
+                });
+        };
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import path from 'path'
+
+// Check if SSL certificates exist
+const sslKeyPath = path.resolve(process.cwd(), 'ssl.key')
+const sslCertPath = path.resolve(process.cwd(), 'ssl.crt')
+const hasSSL = fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)
+
+// HTTPS configuration (only if SSL files exist)
+const httpsConfig = hasSSL ? {
+  key: fs.readFileSync(sslKeyPath),
+  cert: fs.readFileSync(sslCertPath),
+} : undefined
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    ...(httpsConfig && { https: httpsConfig }),
+    host: '0.0.0.0', // Erlaubt externe Verbindungen
+    port: 5173,
+  },
+  preview: {
+    ...(httpsConfig && { https: httpsConfig }),
+    host: '0.0.0.0',
+    port: 4173,
+  },
+})

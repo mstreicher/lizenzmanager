@@ -1,0 +1,46 @@
+:root {
+  --brand-orange: #fe7235;
+  --brand-bg: #ffdcbd;
+  --brand-white: #ffffff;
+}
+
+body {
+  background-color: var(--brand-bg);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.container, .card {
+  background-color: var(--brand-white);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.btn-primary {
+  background-color: var(--brand-orange);
+  border-color: var(--brand-orange);
+}
+
+.btn-primary:hover {
+  background-color: #e85f22;
+  border-color: #e85f22;
+}
+
+a {
+  color: var(--brand-orange);
+}
+
+input, select {
+  border: 1px solid var(--brand-orange);
+  border-radius: 4px;
+}
+
+label {
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+h2, h3 {
+  color: #2c2c2c;
+}

@@ -1,0 +1,656 @@
+openapi: 3.0.3
+info:
+  title: LC-Kern API
+  description: |
+    Universeller Lizenzvermittlungsdienst (LC-Kern) API für externe LMS-Systeme und Lizenzanbieter.
+    
+    ## Authentifizierung
+    Alle API-Aufrufe erfordern einen gültigen API-Schlüssel im Authorization-Header:
+    ```
+    Authorization: Bearer lc_your_api_key_here
+    ```
+    
+    ## VIDIS-Integration
+    Das System verwendet VIDIS-Pseudonyme zur sicheren Nutzeridentifikation ohne Personenbezug.
+    
+    ## Lizenzstatus
+    - `has_license: true` - Nutzer hat Zugriff auf die Lizenz
+    - `has_license: false` - Kein Zugriff oder Lizenz abgelaufen
+    
+  version: 1.0.0
+  contact:
+    name: LC-Kern Support
+    email: support@lc-kern.de
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.lc-kern.de/v1
+    description: Produktionsserver
+  - url: http://localhost:5173/api
+    description: Entwicklungsserver
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /licenses/check:
+    get:
+      summary: Lizenzstatus für einen Nutzer prüfen
+      description: |
+        Prüft, ob ein Nutzer (identifiziert durch VIDIS-Pseudonym) Zugriff auf eine bestimmte Lizenz hat.
+        
+        Berücksichtigt:
+        - Gültigkeit der Lizenz (Zeitraum)
+        - Schulzugehörigkeit des Nutzers
+        - Verfügbare Plätze in der Schullizenz
+        - Individuelle Zuweisungen
+      operationId: checkLicenseStatus
+      tags:
+        - Lizenzabfragen
+      parameters:
+        - name: user
+          in: query
+          required: true
+          description: VIDIS-Pseudonym des Nutzers
+          schema:
+            type: string
+            example: "pseudo-789abc"
+        - name: license
+          in: query
+          required: true
+          description: Eindeutige Lizenz-ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Lizenzstatus erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseStatusResponse'
+              examples:
+                has_license:
+                  summary: Nutzer hat Lizenz
+                  value:
+                    success: true
+                    has_license: true
+                    license:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      title: "Mathematik Klasse 9"
+                      type: "klassenlizenz"
+                      valid_until: "2024-12-31"
+                      permissions:
+                        permission: "use"
+                        prohibition: "commercialUse"
+                        duty: "attribution"
+                        scope: "schule"
+                    assignment:
+                      assigned: true
+                      assigned_at: "2024-01-15T10:30:00Z"
+                no_license:
+                  summary: Nutzer hat keine Lizenz
+                  value:
+                    success: true
+                    has_license: false
+                    message: "License not available for this school"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /licenses/user/{vidis_pseudonym}:
+    get:
+      summary: Alle Lizenzen eines Nutzers abrufen
+      description: |
+        Ruft alle verfügbaren Lizenzen für einen Nutzer ab, basierend auf seinem VIDIS-Pseudonym.
+        
+        Filtert automatisch:
+        - Nur gültige Lizenzen (nicht abgelaufen)
+        - Nur Lizenzen der Nutzerschule
+        - Berücksichtigt individuelle Zuweisungen
+      operationId: getUserLicenses
+      tags:
+        - Lizenzabfragen
+      parameters:
+        - name: vidis_pseudonym
+          in: path
+          required: true
+          description: VIDIS-Pseudonym des Nutzers
+          schema:
+            type: string
+            example: "pseudo-789abc"
+      responses:
+        '200':
+          description: Lizenzen erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLicensesResponse'
+              example:
+                success: true
+                total: 2
+                licenses:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    title: "Mathematik Klasse 9"
+                    type: "klassenlizenz"
+                    subject: "Mathematik"
+                    grade_level: "9"
+                    valid_until: "2024-12-31"
+                    permissions:
+                      permission: "use"
+                      prohibition: "commercialUse"
+                      duty: "attribution"
+                      scope: "schule"
+                    assignment:
+                      assigned_to: "pseudo-789abc"
+                      assigned_at: "2024-01-15T10:30:00Z"
+                  - id: "456e7890-e89b-12d3-a456-426614174001"
+                    title: "Deutsch Klasse 9"
+                    type: "klassenlizenz"
+                    subject: "Deutsch"
+                    grade_level: "9"
+                    valid_until: "2024-12-31"
+                    permissions:
+                      permission: "use"
+                      prohibition: "commercialUse"
+                      duty: "attribution"
+                      scope: "schule"
+                    assignment: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sso/redirect:
+    get:
+      summary: SSO-Weiterleitung zu lizenziertem Inhalt
+      description: |
+        Generiert eine sichere SSO-Weiterleitung zu lizenziertem Inhalt.
+        
+        Der Nutzer wird automatisch authentifiziert und direkt zum Inhalt weitergeleitet,
+        ohne sich erneut anmelden zu müssen (medienbruchfreie Nutzung).
+      operationId: ssoRedirect
+      tags:
+        - SSO
+      parameters:
+        - name: license_id
+          in: query
+          required: true
+          description: ID der Lizenz
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: user
+          in: query
+          required: true
+          description: VIDIS-Pseudonym des Nutzers
+          schema:
+            type: string
+            example: "pseudo-789abc"
+        - name: return_url
+          in: query
+          required: false
+          description: URL für Rücksprung nach Nutzung
+          schema:
+            type: string
+            format: uri
+            example: "https://lms.schule.de/course/123"
+        - name: timestamp
+          in: query
+          required: true
+          description: Unix-Timestamp für Replay-Schutz
+          schema:
+            type: integer
+            example: 1704067200
+      responses:
+        '302':
+          description: Weiterleitung zu lizenziertem Inhalt
+          headers:
+            Location:
+              description: URL des lizenzierten Inhalts
+              schema:
+                type: string
+                format: uri
+                example: "https://content.anbieter.de/book/123?token=abc123"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Keine Berechtigung für diese Lizenz
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "User does not have access to this license"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /anbieter/register:
+    post:
+      summary: Neuen Anbieter registrieren
+      description: |
+        Registriert einen neuen Lizenzanbieter im System.
+        
+        Nach der Registrierung muss der Anbieter von einem Administrator verifiziert werden,
+        bevor er Lizenzen bereitstellen kann.
+      operationId: registerProvider
+      tags:
+        - Anbieter-Management
+      security: []  # Keine Authentifizierung für Registrierung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderRegistration'
+            example:
+              company_name: "Bildungsverlag GmbH"
+              address: "Musterstraße 123\n12345 Musterstadt"
+              contact_email: "kontakt@bildungsverlag.de"
+              contact_phone: "+49 123 456789"
+              tax_id: "123/456/78901"
+              vat_id: "DE123456789"
+              specialization: "schulbuecher"
+              website: "https://www.bildungsverlag.de"
+              description: "Führender Anbieter von digitalen Schulbüchern für alle Klassenstufen."
+      responses:
+        '201':
+          description: Anbieter erfolgreich registriert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderRegistrationResponse'
+              example:
+                success: true
+                message: "Provider registration submitted successfully"
+                provider_id: "789e0123-e89b-12d3-a456-426614174002"
+                api_key: "lc_abc123def456ghi789"
+                verification_status: "pending"
+        '400':
+          description: Ungültige Eingabedaten
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Invalid input data"
+                details:
+                  - "company_name is required"
+                  - "contact_email must be a valid email address"
+
+  /anbieter/verify/{provider_id}:
+    patch:
+      summary: Anbieter verifizieren oder ablehnen
+      description: |
+        Verifiziert oder lehnt eine Anbieter-Registrierung ab.
+        
+        Nur Administratoren können diese Aktion durchführen.
+      operationId: verifyProvider
+      tags:
+        - Anbieter-Management
+      parameters:
+        - name: provider_id
+          in: path
+          required: true
+          description: ID des zu verifizierenden Anbieters
+          schema:
+            type: string
+            format: uuid
+            example: "789e0123-e89b-12d3-a456-426614174002"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderVerification'
+            examples:
+              approve:
+                summary: Anbieter freigeben
+                value:
+                  status: "verified"
+              reject:
+                summary: Anbieter ablehnen
+                value:
+                  status: "rejected"
+                  reason: "Unvollständige Unterlagen"
+      responses:
+        '200':
+          description: Verifikationsstatus erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderVerificationResponse'
+              example:
+                success: true
+                message: "Provider verification status updated"
+                provider_id: "789e0123-e89b-12d3-a456-426614174002"
+                verification_status: "verified"
+                verified_at: "2024-01-15T14:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Keine Berechtigung (nur Administratoren)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Insufficient permissions. Admin role required."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: |
+        API-Schlüssel im Format: `lc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+        
+        Beispiel: `Authorization: Bearer lc_abc123def456ghi789jkl012mno345`
+
+  schemas:
+    LicenseStatusResponse:
+      type: object
+      required:
+        - success
+        - has_license
+      properties:
+        success:
+          type: boolean
+          description: Gibt an, ob die Anfrage erfolgreich war
+        has_license:
+          type: boolean
+          description: Gibt an, ob der Nutzer Zugriff auf die Lizenz hat
+        license:
+          $ref: '#/components/schemas/LicenseInfo'
+        assignment:
+          $ref: '#/components/schemas/AssignmentInfo'
+        message:
+          type: string
+          description: Zusätzliche Informationen (z.B. bei has_license=false)
+        error:
+          type: string
+          description: Fehlermeldung bei success=false
+
+    UserLicensesResponse:
+      type: object
+      required:
+        - success
+        - licenses
+        - total
+      properties:
+        success:
+          type: boolean
+          description: Gibt an, ob die Anfrage erfolgreich war
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseInfo'
+          description: Liste aller verfügbaren Lizenzen
+        total:
+          type: integer
+          description: Gesamtanzahl der Lizenzen
+        error:
+          type: string
+          description: Fehlermeldung bei success=false
+
+    LicenseInfo:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - valid_until
+        - permissions
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Eindeutige Lizenz-ID
+        title:
+          type: string
+          description: Titel der Lizenz
+        type:
+          type: string
+          enum: [einzellizenz, klassenlizenz, schullizenz, landeslizenz]
+          description: Art der Lizenz
+        subject:
+          type: string
+          description: Fachbereich
+        grade_level:
+          type: string
+          description: Klassenstufe
+        valid_until:
+          type: string
+          format: date
+          description: Gültigkeitsdatum der Lizenz
+        permissions:
+          $ref: '#/components/schemas/LicensePermissions'
+        assignment:
+          $ref: '#/components/schemas/AssignmentInfo'
+
+    LicensePermissions:
+      type: object
+      description: ODRL-konforme Lizenzberechtigungen
+      required:
+        - permission
+        - prohibition
+        - duty
+        - scope
+      properties:
+        permission:
+          type: string
+          description: Erlaubte Aktionen (ODRL)
+          example: "use"
+        prohibition:
+          type: string
+          description: Verbotene Aktionen (ODRL)
+          example: "commercialUse"
+        duty:
+          type: string
+          description: Pflichten (ODRL)
+          example: "attribution"
+        scope:
+          type: string
+          description: Geltungsbereich
+          example: "schule"
+
+    AssignmentInfo:
+      type: object
+      properties:
+        assigned:
+          type: boolean
+          description: Gibt an, ob die Lizenz zugewiesen ist
+        assigned_to:
+          type: string
+          description: An wen die Lizenz zugewiesen ist (Klasse/Person)
+        assigned_at:
+          type: string
+          format: date-time
+          description: Zeitpunkt der Zuweisung
+
+    ProviderRegistration:
+      type: object
+      required:
+        - company_name
+        - address
+        - contact_email
+        - specialization
+      properties:
+        company_name:
+          type: string
+          description: Name des Unternehmens
+          example: "Bildungsverlag GmbH"
+        address:
+          type: string
+          description: Vollständige Adresse
+          example: "Musterstraße 123\n12345 Musterstadt"
+        contact_email:
+          type: string
+          format: email
+          description: Kontakt-E-Mail-Adresse
+          example: "kontakt@bildungsverlag.de"
+        contact_phone:
+          type: string
+          description: Telefonnummer (optional)
+          example: "+49 123 456789"
+        tax_id:
+          type: string
+          description: Steuernummer (optional)
+          example: "123/456/78901"
+        vat_id:
+          type: string
+          description: Umsatzsteuer-ID (optional)
+          example: "DE123456789"
+        specialization:
+          type: string
+          enum: [schulbuecher, software, medien, plattformen, mixed, other]
+          description: Spezialisierung des Anbieters
+        website:
+          type: string
+          format: uri
+          description: Website des Anbieters (optional)
+          example: "https://www.bildungsverlag.de"
+        description:
+          type: string
+          description: Beschreibung des Unternehmens (optional)
+          example: "Führender Anbieter von digitalen Schulbüchern."
+
+    ProviderRegistrationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - provider_id
+        - api_key
+        - verification_status
+      properties:
+        success:
+          type: boolean
+          description: Gibt an, ob die Registrierung erfolgreich war
+        message:
+          type: string
+          description: Bestätigungsnachricht
+        provider_id:
+          type: string
+          format: uuid
+          description: ID des registrierten Anbieters
+        api_key:
+          type: string
+          description: Generierter API-Schlüssel
+        verification_status:
+          type: string
+          enum: [pending, verified, rejected]
+          description: Aktueller Verifikationsstatus
+
+    ProviderVerification:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [verified, rejected]
+          description: Neuer Verifikationsstatus
+        reason:
+          type: string
+          description: Grund für Ablehnung (bei status=rejected)
+
+    ProviderVerificationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - provider_id
+        - verification_status
+      properties:
+        success:
+          type: boolean
+          description: Gibt an, ob die Verifikation erfolgreich war
+        message:
+          type: string
+          description: Bestätigungsnachricht
+        provider_id:
+          type: string
+          format: uuid
+          description: ID des Anbieters
+        verification_status:
+          type: string
+          enum: [pending, verified, rejected]
+          description: Neuer Verifikationsstatus
+        verified_at:
+          type: string
+          format: date-time
+          description: Zeitpunkt der Verifikation
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          description: Immer false bei Fehlern
+          example: false
+        error:
+          type: string
+          description: Fehlermeldung
+        details:
+          type: array
+          items:
+            type: string
+          description: Detaillierte Fehlerbeschreibungen (optional)
+
+  responses:
+    Unauthorized:
+      description: Ungültiger oder fehlender API-Schlüssel
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Invalid API key"
+
+    NotFound:
+      description: Ressource nicht gefunden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Resource not found"
+
+    InternalError:
+      description: Interner Serverfehler
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Internal server error"
+
+tags:
+  - name: Lizenzabfragen
+    description: Endpunkte für die Abfrage von Lizenzinformationen
+  - name: SSO
+    description: Single Sign-On für medienbruchfreie Nutzung
+  - name: Anbieter-Management
+    description: Registrierung und Verwaltung von Lizenzanbietern
