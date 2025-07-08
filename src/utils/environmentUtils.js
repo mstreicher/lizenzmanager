@@ -9,10 +9,15 @@
  */
 export const getCurrentEnvironment = () => {
   const hostname = window.location.hostname;
+  const origin = window.location.origin;
   
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  // Development environment
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
     return 'development';
-  } else if (hostname.includes('github.io')) {
+  }
+  
+  // GitHub Pages or other production environments
+  if (hostname.includes('github.io') || origin.includes('mstreicher.github.io')) {
     return 'production';
   }
   

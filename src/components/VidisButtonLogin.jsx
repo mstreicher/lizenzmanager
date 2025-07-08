@@ -299,7 +299,6 @@ export default function VidisButtonLogin() {
         <div className="text-center">
           <vidis-login 
             ref={vidisButtonRef}
-            loginurl="https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth?client_id=lc-kern-client&redirect_uri=https://localhost:5173/auth/callback&response_type=code&scope=openid"
             size="M"
             cookie="true"
             idpdatafile="idps-test"
