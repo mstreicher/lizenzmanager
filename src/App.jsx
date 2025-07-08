@@ -8,8 +8,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import OidcCallback from './components/OidcCallback';
 
 function App() {
+  // Get the base name for GitHub Pages
+  const basename = import.meta.env.PROD ? '/lizenzmanager' : '';
+  
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
