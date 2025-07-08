@@ -9,6 +9,11 @@ export default function VidisOpenIdEndpoint() {
 
   useEffect(() => {
     const processVidisRequest = () => {
+      // Log current URL and environment for debugging
+      console.log('🌍 Current URL:', window.location.href);
+      console.log('🌍 Hostname:', window.location.hostname);
+      console.log('🌍 Pathname:', window.location.pathname);
+      
       // Log all received parameters for debugging
       const allParams = {};
       for (const [key, value] of searchParams.entries()) {
@@ -23,39 +28,34 @@ export default function VidisOpenIdEndpoint() {
 
       if (idpHint) {
         console.log('✅ VIDIS IDP Hint detected:', idpHint);
-        setMessage(`VIDIS IDP erkannt: ${idpHint}`);
+        setMessage(`VIDIS IDP erkannt: ${idpHint} - Weiterleitung zu VIDIS...`);
+        setStatus('redirecting');
         
-        // This is a VIDIS request - redirect to actual VIDIS authorization
-        const redirectToVidis = () => {
-          const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
-          authUrl.searchParams.set('client_id', 'lc-kern-client');
-          
-          // Determine redirect URI based on environment
-          const isProduction = window.location.hostname === 'mstreicher.github.io';
-          const redirectUri = isProduction 
-            ? 'https://mstreicher.github.io/lizenzmanager/auth/callback'
-            : 'https://localhost:5173/auth/callback';
-          
-          authUrl.searchParams.set('redirect_uri', redirectUri);
-          authUrl.searchParams.set('response_type', 'code');
-          authUrl.searchParams.set('kc_idp_hint', idpHint);
-          // Kein scope Parameter - VIDIS verwendet automatisch Standard-Scopes
-          
-          console.log('🔗 Redirecting to VIDIS with IDP hint:', authUrl.toString());
-          
-          setStatus('redirecting');
-          setMessage('Weiterleitung zu VIDIS...');
-          
-          // Redirect to VIDIS
-          window.location.href = authUrl.toString();
-        };
-
-        // Small delay to show the status
-        setTimeout(redirectToVidis, 1500);
+        // This is a VIDIS request - redirect to actual VIDIS authorization immediately
+        const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
+        authUrl.searchParams.set('client_id', 'lc-kern-client');
+        
+        // Determine redirect URI based on environment
+        const isProduction = window.location.hostname === 'mstreicher.github.io';
+        const redirectUri = isProduction 
+          ? 'https://mstreicher.github.io/lizenzmanager/auth/callback'
+          : 'https://localhost:5173/auth/callback';
+        
+        authUrl.searchParams.set('redirect_uri', redirectUri);
+        authUrl.searchParams.set('response_type', 'code');
+        authUrl.searchParams.set('kc_idp_hint', idpHint);
+        // Kein scope Parameter - VIDIS verwendet automatisch Standard-Scopes
+        
+        console.log('🔗 Redirecting to VIDIS with IDP hint:', authUrl.toString());
+        console.log('🔗 Redirect URI:', redirectUri);
+        
+        // Immediate redirect to VIDIS (no delay)
+        window.location.href = authUrl.toString();
         
       } else {
         // No IDP hint - this might be a direct access or error
         console.log('⚠️ No VIDIS IDP hint found in parameters');
+        console.log('⚠️ Available parameters:', Object.keys(allParams));
         setStatus('error');
         setMessage('Kein VIDIS IDP-Parameter gefunden. Bitte verwenden Sie den VIDIS-Button.');
         
