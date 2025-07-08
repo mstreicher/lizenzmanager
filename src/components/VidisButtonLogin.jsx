@@ -54,6 +54,18 @@ export default function VidisButtonLogin() {
     loadVidisScript();
   }, []);
 
+  // Additional effect to ensure loginurl is set when component is ready
+  useEffect(() => {
+    if (scriptsLoaded && vidisButtonRef.current) {
+      // Wait a bit more for the web component to be fully initialized
+      const timer = setTimeout(() => {
+        setupVidisButton();
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [scriptsLoaded]);
+
   const setupVidisButton = () => {
     if (vidisButtonRef.current && scriptsLoaded) {
       const vidisButton = vidisButtonRef.current;
@@ -73,13 +85,35 @@ export default function VidisButtonLogin() {
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
-      // Set the login URL
-      vidisButton.setAttribute('loginurl', authUrl.toString());
+      // Set the login URL - try multiple times to ensure it's set
+      const setLoginUrl = () => {
+        if (vidisButton && typeof vidisButton.setAttribute === 'function') {
+          vidisButton.setAttribute('loginurl', authUrl.toString());
+          console.log('✅ VIDIS loginurl set:', vidisButton.getAttribute('loginurl'));
+          return true;
+        }
+        return false;
+      };
+      
+      // Try to set immediately
+      if (!setLoginUrl()) {
+        // If it fails, try again after a short delay
+        setTimeout(() => {
+          if (!setLoginUrl()) {
+            console.error('❌ Failed to set VIDIS loginurl');
+          }
+        }, 500);
+      }
       
       // Add event listeners for VIDIS button
       vidisButton.addEventListener('vidis-login-success', handleVidisSuccess);
       vidisButton.addEventListener('vidis-login-error', handleVidisError);
       vidisButton.addEventListener('vidis-login-cancelled', handleVidisCancelled);
+    } else {
+      console.warn('⚠️ VIDIS button not ready:', { 
+        buttonRef: !!vidisButtonRef.current, 
+        scriptsLoaded 
+      });
     }
   };
 
