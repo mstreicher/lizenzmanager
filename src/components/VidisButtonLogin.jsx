@@ -75,10 +75,8 @@ export default function VidisButtonLogin() {
       const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
       authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
       authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
-      authUrl.searchParams.set('response_type', 'id_token'); // Versuche id_token statt code
-      authUrl.searchParams.set('nonce', Date.now().toString()); // Nonce für id_token erforderlich
-      // Versuche ohne Scope-Parameter - VIDIS könnte Standard-Scopes verwenden
-      // authUrl.searchParams.set('scope', envConfig.vidis.scope);
+      authUrl.searchParams.set('response_type', 'code'); // Zurück zu code - Implicit Flow ist deaktiviert
+      authUrl.searchParams.set('scope', 'openid'); // Scope explizit setzen
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
