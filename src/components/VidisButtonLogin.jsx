@@ -71,12 +71,12 @@ export default function VidisButtonLogin() {
       // Log environment info for debugging
       logEnvironmentInfo();
       
-      // Create authorization URL with proper encoding
+      // Create authorization URL with minimal parameters - VIDIS might not support explicit response_type
       const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
       authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
       authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
-      authUrl.searchParams.set('response_type', 'code'); // Zurück zu code - nur das wird unterstützt
-      // Kein scope Parameter - VIDIS verwendet automatisch Standard-Scopes
+      // Versuche ohne response_type - VIDIS könnte Standard verwenden
+      // authUrl.searchParams.set('response_type', 'code');
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
