@@ -88,9 +88,9 @@ export default function Login() {
 
       <div className="mt-4 text-center">
         <small className="text-muted">
-          Neu als Anbieter? <a href="/register" className="text-decoration-none">Hier registrieren</a>
+          Neu als Anbieter? <a href={`${import.meta.env.PROD ? '/lizenzmanager' : ''}/register`} className="text-decoration-none">Hier registrieren</a>
           <br />
-          Entwickler? <a href="/api-docs" className="text-decoration-none">API-Dokumentation</a>
+          Entwickler? <a href={`${import.meta.env.PROD ? '/lizenzmanager' : ''}/api-docs`} className="text-decoration-none">API-Dokumentation</a>
         </small>
       </div>
     </div>
