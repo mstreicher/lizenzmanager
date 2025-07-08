@@ -71,8 +71,9 @@ export default function VidisButtonLogin() {
       // Log environment info for debugging
       logEnvironmentInfo();
       
-      // Create URL to our own application that will handle the VIDIS auth request
-      const authUrl = new URL('/auth/vidis', envConfig.baseUrl);
+      // VIDIS Web Component erwartet unseren OpenID Connect Endpoint
+      // Das Web Component übernimmt die IDP-Auswahl und leitet dann zu unserem OIDC Endpoint
+      const authUrl = new URL('/auth/openid', envConfig.baseUrl);
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
