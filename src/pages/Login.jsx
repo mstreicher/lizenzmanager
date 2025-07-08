@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { supabase } from '../../sources/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import VidisButtonLogin from '../components/VidisButtonLogin';
-import EnvironmentDebug from '../components/EnvironmentDebug';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -37,9 +36,6 @@ export default function Login() {
 
       {/* VIDIS Login (Primary) */}
       <VidisButtonLogin />
-
-      {/* Environment Debug Info (temporär für Debugging) */}
-      <EnvironmentDebug />
 
       {/* Traditional Login (Secondary) */}
       {!showTraditionalLogin ? (

@@ -24,16 +24,23 @@ export default function OidcCallback() {
           throw new Error(`VIDIS Error: ${error}`);
         }
 
-        if (!code) {
-          throw new Error('Kein Authorization Code erhalten');
-        }
-
-        // Handle VIDIS callback manually since we're not using the full OIDC client flow
-        console.log('Received authorization code:', code);
+        // Check for different callback types
+        const accessToken = urlParams.get('access_token');
+        const idToken = urlParams.get('id_token');
         
-        // For now, redirect to home page with success
-        // The actual token exchange would happen here in a real implementation
-        navigate('/?vidis_success=true&code=' + code);
+        if (code) {
+          // Authorization Code Flow - redirect to home, let VIDIS Web Component handle it
+          console.log('Received authorization code:', code);
+          navigate('/');
+        } else if (accessToken || idToken) {
+          // Token received directly - redirect to home, let VIDIS Web Component handle it
+          console.log('Received token directly');
+          navigate('/');
+        } else {
+          // No code or token - let VIDIS Web Component handle the callback
+          console.log('No code or token found, redirecting to home');
+          navigate('/');
+        }
         
       } catch (err) {
         console.error('OIDC callback error:', err);
