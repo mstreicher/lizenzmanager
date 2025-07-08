@@ -69,7 +69,7 @@ export const getEnvironmentConfig = () => {
       clientId: 'lc-kern-client',
       clientSecret: 'kCXIpvO7kVrommGAPi6RBenZCocr6fl3',
       redirectUri: getVidisRedirectUri(),
-      scope: 'openid',
+      scope: 'openid', // Nur openid - VIDIS unterstützt keine anderen Scopes
       discoveryUrl: 'https://aai-test.vidis.schule/auth/realms/vidis/.well-known/openid-configuration'
     }
   };

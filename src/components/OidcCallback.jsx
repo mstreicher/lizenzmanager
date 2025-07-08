@@ -17,6 +17,10 @@ export default function OidcCallback() {
         const error = urlParams.get('error');
 
         if (error) {
+          // Handle specific VIDIS errors
+          if (error === 'invalid_scope') {
+            throw new Error(`VIDIS Scope-Fehler: Nur 'openid' Scope wird unterstützt. Bitte überprüfen Sie die VIDIS-Client-Konfiguration.`);
+          }
           throw new Error(`VIDIS Error: ${error}`);
         }
 
