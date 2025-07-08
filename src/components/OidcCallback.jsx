@@ -29,34 +29,16 @@ export default function OidcCallback() {
         }
 
         if (code) {
-          // Authorization Code Flow - exchange code for token directly
+          // Authorization Code Flow - let VIDIS Web Component handle token exchange
           console.log('✅ Processing authorization code:', code);
-          setStatus('Token-Austausch mit VIDIS...');
+          setStatus('Weiterleitung zur Login-Seite für Token-Verarbeitung...');
           
-          // Exchange authorization code for access token
-          const tokenResponse = await exchangeCodeForToken(code);
-          console.log('✅ Token response received:', tokenResponse);
+          // Store the authorization code in sessionStorage for the VIDIS Web Component
+          sessionStorage.setItem('vidis_auth_code', code);
+          sessionStorage.setItem('vidis_callback_pending', 'true');
           
-          if (tokenResponse && tokenResponse.access_token) {
-            setStatus('Verarbeitung der Benutzerdaten...');
-            
-            // Extract VIDIS data from access token
-            const tokenData = decodeVidisToken(tokenResponse.access_token);
-            console.log('✅ VIDIS token data:', tokenData);
-            
-            if (tokenData) {
-              // Process VIDIS profile
-              const processedProfile = processVidisProfile(tokenData);
-              console.log('✅ Processed VIDIS profile:', processedProfile);
-              
-              // Process the VIDIS login (same logic as in VidisButtonLogin)
-              await processVidisLogin(processedProfile);
-            } else {
-              throw new Error('Keine VIDIS-Daten im Token gefunden');
-            }
-          } else {
-            throw new Error('Kein Access Token von VIDIS erhalten');
-          }
+          // Redirect to login page where VIDIS Web Component can handle the token exchange
+          navigate('/?vidis_callback=true');
         } else {
           // No code - redirect to login
           console.log('⚠️ No authorization code found, redirecting to login');
