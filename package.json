@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "build:prod": "vite build --mode production",
+    "preview:prod": "vite preview --mode production",
+    "deploy": "npm run build:prod"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",

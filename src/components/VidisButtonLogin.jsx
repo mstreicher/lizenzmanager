@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../sources/supabaseClient';
 import { processVidisProfile } from '../services/oidcConfig';
+import { getEnvironmentConfig, logEnvironmentInfo } from '../utils/environmentUtils';
 
 export default function VidisButtonLogin() {
   const [loading, setLoading] = useState(false);
@@ -57,12 +58,20 @@ export default function VidisButtonLogin() {
     if (vidisButtonRef.current && scriptsLoaded) {
       const vidisButton = vidisButtonRef.current;
       
+      // Get environment-specific configuration
+      const envConfig = getEnvironmentConfig();
+      
+      // Log environment info for debugging
+      logEnvironmentInfo();
+      
       // Create authorization URL with proper encoding
       const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
-      authUrl.searchParams.set('client_id', 'lc-kern-client');
-      authUrl.searchParams.set('redirect_uri', 'https://localhost:5173/auth/callback');
+      authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
+      authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
       authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'openid');
+      authUrl.searchParams.set('scope', envConfig.vidis.scope);
+      
+      console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
       // Set the login URL
       vidisButton.setAttribute('loginurl', authUrl.toString());
@@ -107,6 +116,9 @@ export default function VidisButtonLogin() {
     try {
       console.log('Processing authorization code:', code);
       
+      // Get environment-specific configuration
+      const envConfig = getEnvironmentConfig();
+      
       // Exchange authorization code for tokens
       const tokenResponse = await fetch('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/token', {
         method: 'POST',
@@ -115,10 +127,10 @@ export default function VidisButtonLogin() {
         },
         body: new URLSearchParams({
           grant_type: 'authorization_code',
-          client_id: 'lc-kern-client',
-          client_secret: 'kCXIpvO7kVrommGAPi6RBenZCocr6fl3',
+          client_id: envConfig.vidis.clientId,
+          client_secret: envConfig.vidis.clientSecret,
           code: code,
-          redirect_uri: 'https://localhost:5173/auth/callback',
+          redirect_uri: envConfig.vidis.redirectUri,
         }),
       });
 
