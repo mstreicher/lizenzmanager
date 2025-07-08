@@ -51,11 +51,20 @@ userManager.events.addSilentRenewError((e) => {
 
 // VIDIS Role Mapping
 export const mapVidisRole = (vidisRole) => {
+  console.log('🔄 Mapping VIDIS role:', vidisRole);
   switch (vidisRole) {
-    case 'LEHR': return 'lehrer';
-    case 'LERN': return 'lehrer'; // Lernende werden als Lehrer behandelt, da es keine separate Schüler-Rolle gibt
-    case 'LEIT': return 'schulleiter';
-    default: return 'lehrer'; // Fallback
+    case 'LEHR': 
+      console.log('✅ Mapped LEHR to lehrer');
+      return 'lehrer';
+    case 'LERN': 
+      console.log('✅ Mapped LERN to lehrer');
+      return 'lehrer'; // Lernende werden als Lehrer behandelt, da es keine separate Schüler-Rolle gibt
+    case 'LEIT': 
+      console.log('✅ Mapped LEIT to schulleiter');
+      return 'schulleiter';
+    default: 
+      console.log('⚠️ Unknown VIDIS role, using fallback lehrer');
+      return 'lehrer'; // Fallback
   }
 };
 

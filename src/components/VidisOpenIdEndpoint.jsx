@@ -21,13 +21,11 @@ export default function VidisOpenIdEndpoint() {
       }
       console.log('🔗 VIDIS OpenID Endpoint received parameters:', allParams);
 
-      // Check for VIDIS IDP hint parameter
-      const vidisIdpHint = searchParams.get('vidis_idp_hint');
-      const kcIdpHint = searchParams.get('kc_idp_hint');
-      const idpHint = vidisIdpHint || kcIdpHint;
+      // Check for VIDIS IDP hint parameter (vidis_idp_hint from VIDIS Web Component)
+      const idpHint = searchParams.get('vidis_idp_hint');
 
       if (idpHint) {
-        console.log('✅ VIDIS IDP Hint detected:', idpHint);
+        console.log('✅ VIDIS IDP Hint detected (vidis_idp_hint):', idpHint);
         setMessage(`VIDIS IDP erkannt: ${idpHint} - Weiterleitung zu VIDIS...`);
         setStatus('redirecting');
         
@@ -39,11 +37,11 @@ export default function VidisOpenIdEndpoint() {
         const isProduction = window.location.hostname === 'mstreicher.github.io';
         const redirectUri = isProduction 
           ? 'https://mstreicher.github.io/lizenzmanager/auth/callback'
-          : 'https://localhost:5173/auth/callback';
+          : `${window.location.protocol}//${window.location.host}/auth/callback`;
         
         authUrl.searchParams.set('redirect_uri', redirectUri);
         authUrl.searchParams.set('response_type', 'code');
-        authUrl.searchParams.set('kc_idp_hint', idpHint);
+        authUrl.searchParams.set('vidis_idp_hint', idpHint);
         // Kein scope Parameter - VIDIS verwendet automatisch Standard-Scopes
         
         console.log('🔗 Redirecting to VIDIS with IDP hint:', authUrl.toString());
@@ -54,10 +52,10 @@ export default function VidisOpenIdEndpoint() {
         
       } else {
         // No IDP hint - this might be a direct access or error
-        console.log('⚠️ No VIDIS IDP hint found in parameters');
+        console.log('⚠️ No vidis_idp_hint parameter found');
         console.log('⚠️ Available parameters:', Object.keys(allParams));
         setStatus('error');
-        setMessage('Kein VIDIS IDP-Parameter gefunden. Bitte verwenden Sie den VIDIS-Button.');
+        setMessage('Kein vidis_idp_hint Parameter gefunden. Bitte verwenden Sie den VIDIS-Button.');
         
         // Redirect back to login after delay
         setTimeout(() => {

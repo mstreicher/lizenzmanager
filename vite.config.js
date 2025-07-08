@@ -41,6 +41,8 @@ export default defineConfig(({ command, mode }) => {
       ...(httpsConfig && { https: httpsConfig }),
       host: '0.0.0.0', // Erlaubt externe Verbindungen
       port: 5173,
+      // SPA routing support - wichtig für React Router
+      historyApiFallback: true,
     },
     preview: {
       ...(httpsConfig && { https: httpsConfig }),
