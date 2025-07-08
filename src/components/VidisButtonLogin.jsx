@@ -12,16 +12,11 @@ export default function VidisButtonLogin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we're returning from VIDIS with an authorization code
+    // Clean up any URL parameters from VIDIS redirect
     const urlParams = new URLSearchParams(window.location.search);
-    const vidisSuccess = urlParams.get('vidis_success');
-    const code = urlParams.get('code');
-
-    if (vidisSuccess === 'true' && code) {
-      handleAuthorizationCode(code);
-      // Clean up URL
+    if (urlParams.has('code') || urlParams.has('state') || urlParams.has('session_state')) {
+      // Clean up URL but don't process here - let VIDIS Web Component handle it
       window.history.replaceState({}, document.title, window.location.pathname);
-      return;
     }
 
     // Load VIDIS Button Web Component
@@ -150,43 +145,9 @@ export default function VidisButtonLogin() {
     try {
       console.log('Processing authorization code:', code);
       
-      // Get environment-specific configuration
-      const envConfig = getEnvironmentConfig();
-      
-      // Exchange authorization code for tokens
-      const tokenResponse = await fetch('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: envConfig.vidis.clientId,
-          client_secret: envConfig.vidis.clientSecret,
-          code: code,
-          redirect_uri: envConfig.vidis.redirectUri,
-        }),
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error(`Token exchange failed: ${tokenResponse.status}`);
-      }
-
-      const tokens = await tokenResponse.json();
-      console.log('Received tokens:', tokens);
-
-      // Decode access token to get VIDIS data
-      const { decodeVidisToken } = await import('../services/oidcConfig');
-      const vidisData = decodeVidisToken(tokens.access_token);
-      
-      if (!vidisData) {
-        throw new Error('Keine VIDIS-Daten im Access Token gefunden');
-      }
-
-      console.log('VIDIS data from token:', vidisData);
-      
-      // Process the VIDIS data
-      await processVidisLogin(vidisData);
+      // CORS-Problem: Direkter Token-Austausch nicht möglich von GitHub Pages
+      // Stattdessen verwenden wir das VIDIS Web Component für den Token-Austausch
+      setError('CORS-Problem erkannt. Bitte verwenden Sie den VIDIS-Button für die Anmeldung.');
       
     } catch (err) {
       console.error('Authorization code processing error:', err);
