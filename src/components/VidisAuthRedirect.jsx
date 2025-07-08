@@ -7,12 +7,14 @@ export default function VidisAuthRedirect() {
       // Get environment-specific configuration
       const envConfig = getEnvironmentConfig();
       
-      // Create VIDIS authorization URL
+      // Create VIDIS authorization URL with minimal parameters
+      // Da der VIDIS-Client nur Authorization Code Flow unterstützt, aber Implicit Flow deaktiviert ist,
+      // verwenden wir response_type=code ohne scope Parameter
       const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
       authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
       authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
       authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'openid');
+      // Kein scope Parameter - VIDIS verwendet automatisch Standard-Scopes
       
       console.log('🔗 Redirecting to VIDIS:', authUrl.toString());
       
@@ -39,6 +41,11 @@ export default function VidisAuthRedirect() {
           <p className="text-muted">
             Sie werden zu VIDIS weitergeleitet...
           </p>
+          <div className="mt-3">
+            <small className="text-info">
+              Authorization Code Flow wird verwendet
+            </small>
+          </div>
         </div>
       </div>
     </div>
