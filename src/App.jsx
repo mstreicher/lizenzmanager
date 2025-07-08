@@ -6,6 +6,7 @@ import AnbieterDashboard from './pages/AnbieterDashboard';
 import SchulleiterDashboard from './pages/SchulleiterDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import OidcCallback from './components/OidcCallback';
+import VidisAuthRedirect from './components/VidisAuthRedirect';
 
 function App() {
   // Get the base name for GitHub Pages
@@ -18,6 +19,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/auth/callback" element={<OidcCallback />} />
+        <Route path="/auth/vidis" element={<VidisAuthRedirect />} />
         <Route path="/anbieter" element={<AnbieterDashboard />} />
         <Route path="/schule" element={<SchulleiterDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />

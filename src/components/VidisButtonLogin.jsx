@@ -71,12 +71,8 @@ export default function VidisButtonLogin() {
       // Log environment info for debugging
       logEnvironmentInfo();
       
-      // Create authorization URL with minimal parameters - VIDIS might not support explicit response_type
-      const authUrl = new URL('https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/auth');
-      authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
-      authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
-      // Versuche ohne response_type - VIDIS könnte Standard verwenden
-      // authUrl.searchParams.set('response_type', 'code');
+      // Create URL to our own application that will handle the VIDIS auth request
+      const authUrl = new URL('/auth/vidis', envConfig.baseUrl);
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
