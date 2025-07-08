@@ -76,7 +76,8 @@ export default function VidisButtonLogin() {
       authUrl.searchParams.set('client_id', envConfig.vidis.clientId);
       authUrl.searchParams.set('redirect_uri', envConfig.vidis.redirectUri);
       authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', envConfig.vidis.scope);
+      // Versuche ohne Scope-Parameter - VIDIS könnte Standard-Scopes verwenden
+      // authUrl.searchParams.set('scope', envConfig.vidis.scope);
       
       console.log('🔗 VIDIS Authorization URL:', authUrl.toString());
       
